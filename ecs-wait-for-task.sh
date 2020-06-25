@@ -79,40 +79,6 @@ function assertRequiredArgumentsSet() {
 }
 
 
-
-function waitForGreenDeployment {
-  DEPLOYMENT_SUCCESS="false"
-  every=2
-  i=0
-
-  echo "Waiting for service deployment to complete..."
-
-  while [ ${i} -lt ${TIMEOUT} ]
-  do
-    NUM_DEPLOYMENTS=$(${AWS_ECS} describe-services --services ${SERVICE} --cluster ${CLUSTER} | jq "[.services[].deployments[]] | length")
-
-    # Wait to see if more than 1 deployment stays running
-    # If the wait time has passed, we need to roll back
-    if [ ${NUM_DEPLOYMENTS} -eq 1 ]; then
-      echo "Service deployment successful."
-      DEPLOYMENT_SUCCESS="true"
-      # Exit the loop.
-      i=${TIMEOUT}
-    else
-      sleep ${every}
-      i=$(( $i + $every ))
-    fi
-  done
-
-  if [[ "${DEPLOYMENT_SUCCESS}" != "true" ]]; then
-    if [[ "${ENABLE_ROLLBACK}" != "false" ]]; then
-      rollback
-    fi
-    exit 1
-  fi
-}
-
-
 ###################
 # Run application #
 ###################
@@ -170,17 +136,31 @@ fi
 # Check that required arguments are provided
 assertRequiredArgumentsSet
 
-TASK_RUN=$(aws ecs describe-tasks --region ${AWS_REGION} --cluster ${AWS_CLUSTER} --tasks ${TASK_ARN})
-FAILURES=$(echo ${TASK_RUN} | jq '.failures[].reason')
+EXIT_CODE="false"
+every=5
+i=0
 
-if [ -z ${FAILURES} ]; then
-    echo "Failures found: ${FAILURES}"
-    exit 9
-fi
 
-EXIT_CODE=$(echo ${TASK_RUN} | jq --raw-output '.tasks[0].containers[0].exitCode')
+while [[ ${i} -lt ${TIMEOUT} ]]
+do
+    echo "Waiting for task run to finish..."
 
-# TODO: while(timeout)
-# TODO: if exit code exists exit him
+    TASK_RUN=$(aws ecs describe-tasks --region ${AWS_REGION} --cluster ${AWS_CLUSTER} --tasks ${TASK_ARN})
+    FAILURES=$(echo ${TASK_RUN} | jq '.failures[].reason')
 
-exit 0
+    if [ ! -z ${FAILURES} ]; then
+        echo "Failures found: ${FAILURES}"
+        exit 9
+    fi
+
+    EXIT_CODE=$(echo ${TASK_RUN} | jq --raw-output '.tasks[0].containers[0].exitCode')
+
+    if [ ! -z ${EXIT_CODE} ]; then
+        echo "Task finished with code ${EXIT_CODE}"
+        # TODO: logs?
+        exit ${EXIT_CODE}
+    fi
+
+  sleep ${every}
+  i=$(( $i + $every ))
+done
