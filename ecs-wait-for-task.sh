@@ -9,6 +9,7 @@ AWS_CLUSTER=false
 TASK_ARN=false
 TIMEOUT=90
 VERBOSE=false
+FAILURES=false
 
 
 function usage() {
@@ -66,12 +67,12 @@ function assertRequiredArgumentsSet() {
         exit 2
     fi
 
-    if [ $AWS_CLUSTER == false ]; then
+    if [ ${AWS_CLUSTER} == false ]; then
         echo "CLUSTER is required. You can pass the value using --cluster"
         exit 2
     fi
 
-    if [ $TASK_ARN == false ]; then
+    if [ ${TASK_ARN} == false ]; then
         echo "TASK_ARN is required. You can pass the value using --task"
         exit 2
     fi
@@ -86,19 +87,19 @@ function waitForGreenDeployment {
 
   echo "Waiting for service deployment to complete..."
 
-  while [ $i -lt $TIMEOUT ]
+  while [ ${i} -lt ${TIMEOUT} ]
   do
-    NUM_DEPLOYMENTS=$($AWS_ECS describe-services --services $SERVICE --cluster $CLUSTER | jq "[.services[].deployments[]] | length")
+    NUM_DEPLOYMENTS=$(${AWS_ECS} describe-services --services ${SERVICE} --cluster ${CLUSTER} | jq "[.services[].deployments[]] | length")
 
     # Wait to see if more than 1 deployment stays running
     # If the wait time has passed, we need to roll back
-    if [ $NUM_DEPLOYMENTS -eq 1 ]; then
+    if [ ${NUM_DEPLOYMENTS} -eq 1 ]; then
       echo "Service deployment successful."
       DEPLOYMENT_SUCCESS="true"
       # Exit the loop.
-      i=$TIMEOUT
+      i=${TIMEOUT}
     else
-      sleep $every
+      sleep ${every}
       i=$(( $i + $every ))
     fi
   done
@@ -135,7 +136,7 @@ while [[ $# -gt 0 ]]
 do
     key="$1"
 
-    case $key in
+    case ${key} in
         --cluster)
             AWS_CLUSTER="$2"
             shift # past argument
@@ -162,15 +163,24 @@ do
     shift # past argument or value
 done
 
-if [ $VERBOSE == true ]; then
+if [ ${VERBOSE} == true ]; then
     set -x
 fi
 
 # Check that required arguments are provided
 assertRequiredArgumentsSet
 
-TASK_DESCRIPTION=`aws ecs describe-tasks --region $AWS_REGION --cluster $AWS_CLUSTER --tasks $TASK_ARN | jq --raw-output '.tasks[0].containers[0].exitCode'`
+TASK_RUN=$(aws ecs describe-tasks --region ${AWS_REGION} --cluster ${AWS_CLUSTER} --tasks ${TASK_ARN})
+FAILURES=$(echo ${TASK_RUN} | jq '.failures[].reason')
 
-EXIT_CODE=`echo $RESULT | jq --raw-output '.tasks[0].containers[0].exitCode'`
+if [ -z ${FAILURES} ]; then
+    echo "Failures found: ${FAILURES}"
+    exit 9
+fi
+
+EXIT_CODE=$(echo ${TASK_RUN} | jq --raw-output '.tasks[0].containers[0].exitCode')
+
+# TODO: while(timeout)
+# TODO: if exit code exists exit him
 
 exit 0
