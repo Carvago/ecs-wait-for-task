@@ -5,7 +5,7 @@
 
 
 # Setup default values for variables
-CLUSTER=false
+AWS_CLUSTER=false
 TASK_ARN=false
 TIMEOUT=90
 VERBOSE=false
@@ -51,7 +51,22 @@ function require() {
 function assertRequiredArgumentsSet() {
 	# TODO: check for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
 
-    if [ $CLUSTER == false ]; then
+	if [ -z ${AWS_ACCESS_KEY_ID+x} ]; then
+        echo "AWS_ACCESS_KEY_ID env variable is required."
+        exit 2
+    fi
+
+	if [ -z ${AWS_SECRET_ACCESS_KEY+x} ]; then
+        echo "AWS_SECRET_ACCESS_KEY env variable is required."
+        exit 2
+    fi
+
+	if [ -z ${AWS_REGION+x} ]; then
+        echo "AWS_REGION env variable is required."
+        exit 2
+    fi
+
+    if [ $AWS_CLUSTER == false ]; then
         echo "CLUSTER is required. You can pass the value using --cluster"
         exit 2
     fi
@@ -122,7 +137,7 @@ do
 
     case $key in
         --cluster)
-            CLUSTER="$2"
+            AWS_CLUSTER="$2"
             shift # past argument
             ;;
         --timeout)
@@ -154,8 +169,7 @@ fi
 # Check that required arguments are provided
 assertRequiredArgumentsSet
 
-
-TASK_DESCRIPTION=`aws ecs describe-tasks --cluster $AWS_CLUSTER --tasks $TASK_ARN | jq --raw-output '.tasks[0].containers[0].exitCode'`
+TASK_DESCRIPTION=`aws ecs describe-tasks --region $AWS_REGION --cluster $AWS_CLUSTER --tasks $TASK_ARN | jq --raw-output '.tasks[0].containers[0].exitCode'`
 
 EXIT_CODE=`echo $RESULT | jq --raw-output '.tasks[0].containers[0].exitCode'`
 

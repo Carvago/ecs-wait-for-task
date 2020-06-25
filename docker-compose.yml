@@ -2,4 +2,5 @@ ecs-wait-for-task:
     build: .
     volumes:
         - ./ecs-wait-for-task.sh:/usr/local/bin/ecs-wait-for-task
-
+    env_file:
+        - .env
