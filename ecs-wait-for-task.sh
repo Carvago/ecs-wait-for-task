@@ -50,8 +50,6 @@ function require() {
 
 # Check that all required variables/combinations are set
 function assertRequiredArgumentsSet() {
-	# TODO: check for AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY
-
 	if [ -z ${AWS_ACCESS_KEY_ID+x} ]; then
         echo "AWS_ACCESS_KEY_ID env variable is required."
         exit 2
@@ -140,7 +138,6 @@ EXIT_CODE="false"
 every=5
 i=0
 
-
 while [[ ${i} -lt ${TIMEOUT} ]]
 do
     echo "Waiting for task run to finish..."
@@ -148,16 +145,18 @@ do
     TASK_RUN=$(aws ecs describe-tasks --region ${AWS_REGION} --cluster ${AWS_CLUSTER} --tasks ${TASK_ARN})
     FAILURES=$(echo ${TASK_RUN} | jq '.failures[].reason')
 
-    if [ ! -z ${FAILURES} ]; then
+    if [[ ! -z ${FAILURES} ]]; then
         echo "Failures found: ${FAILURES}"
         exit 9
     fi
 
     EXIT_CODE=$(echo ${TASK_RUN} | jq --raw-output '.tasks[0].containers[0].exitCode')
 
-    if [ ! -z ${EXIT_CODE} ]; then
+    if [[ ! -z ${EXIT_CODE} ]]; then
         echo "Task finished with code ${EXIT_CODE}"
-        # TODO: logs?
+        ## echo "## LOGS ##"
+        ## ecs-cli logs --task-id ${TASK_ARN} --region ${AWS_REGION} --cluster ${AWS_CLUSTER}
+        ## echo "##########"
         exit ${EXIT_CODE}
     fi
 
