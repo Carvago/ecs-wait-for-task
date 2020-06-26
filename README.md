@@ -17,6 +17,7 @@ Simple script for monitoring and waiting for success of Amazon Elastic Container
 ecs-wait-for-task --cluster "my-cluster" --task "arn:aws:ecs:eu-central-1:310753720731:task/8fbc18ee-6f44-42f8-ba33-b319e4fc1949"
 ```
 
+---
 
 ### Thank you!
 
