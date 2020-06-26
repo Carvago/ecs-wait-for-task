@@ -92,6 +92,9 @@ if [ $# == 0 ]; then usage; fi
 # Check for AWS, AWS Command Line Interface
 require aws
 
+# Check for ECS-CLI
+require ecs-cli
+
 # Check for jq, Command-line JSON processor
 require jq
 
