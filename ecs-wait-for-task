@@ -50,27 +50,27 @@ function require() {
 
 # Check that all required variables/combinations are set
 function assertRequiredArgumentsSet() {
-	if [ -z ${AWS_ACCESS_KEY_ID+x} ]; then
+	if [[ -z ${AWS_ACCESS_KEY_ID+x} ]]; then
         echo "AWS_ACCESS_KEY_ID env variable is required."
         exit 2
     fi
 
-	if [ -z ${AWS_SECRET_ACCESS_KEY+x} ]; then
+	if [[ -z ${AWS_SECRET_ACCESS_KEY+x} ]]; then
         echo "AWS_SECRET_ACCESS_KEY env variable is required."
         exit 2
     fi
 
-	if [ -z ${AWS_REGION+x} ]; then
+	if [[ -z ${AWS_REGION+x} ]]; then
         echo "AWS_REGION env variable is required."
         exit 2
     fi
 
-    if [ ${AWS_CLUSTER} == false ]; then
+    if [[ ${AWS_CLUSTER} == false ]]; then
         echo "CLUSTER is required. You can pass the value using --cluster"
         exit 2
     fi
 
-    if [ ${TASK_ARN} == false ]; then
+    if [[ ${TASK_ARN} == false ]]; then
         echo "TASK_ARN is required. You can pass the value using --task"
         exit 2
     fi
@@ -87,7 +87,7 @@ set -u
 set -e
 
 # If no args are provided, display usage information
-if [ $# == 0 ]; then usage; fi
+if [[ $# == 0 ]]; then usage; fi
 
 # Check for AWS, AWS Command Line Interface
 require aws
@@ -130,7 +130,7 @@ do
     shift # past argument or value
 done
 
-if [ ${VERBOSE} == true ]; then
+if [[ ${VERBOSE} == true ]]; then
     set -x
 fi
 
@@ -158,7 +158,7 @@ do
     if [[ ${EXIT_CODE} =~ ^[0-9]+$ ]]; then
         echo "Task finished with code ${EXIT_CODE}"
 
-        [[ $TASK_ARN =~ /(.*)$ ]]
+        [[ ${TASK_ARN} =~ /(.*)$ ]]
         TASK_ID=${BASH_REMATCH[1]}
 
         echo "## LOGS ##"
