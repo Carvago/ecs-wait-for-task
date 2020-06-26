@@ -134,7 +134,7 @@ fi
 # Check that required arguments are provided
 assertRequiredArgumentsSet
 
-EXIT_CODE="false"
+EXIT_CODE=false
 every=5
 i=0
 
@@ -152,11 +152,11 @@ do
 
     EXIT_CODE=$(echo ${TASK_RUN} | jq --raw-output '.tasks[0].containers[0].exitCode')
 
-    if [[ ! -z ${EXIT_CODE} ]]; then
+    if [[ ${EXIT_CODE} =~ ^[0-9]+$ ]]; then
         echo "Task finished with code ${EXIT_CODE}"
-        ## echo "## LOGS ##"
-        ## ecs-cli logs --task-id ${TASK_ARN} --region ${AWS_REGION} --cluster ${AWS_CLUSTER}
-        ## echo "##########"
+        echo "## LOGS ##"
+        ecs-cli logs --task-id ${TASK_ARN} --region ${AWS_REGION} --cluster ${AWS_CLUSTER}
+        echo "##########"
         exit ${EXIT_CODE}
     fi
 

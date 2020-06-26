@@ -10,4 +10,4 @@ RUN chmod +x /usr/local/bin/ecs-cli
 COPY ecs-wait-for-task.sh /usr/local/bin/ecs-wait-for-task
 RUN chmod +x /usr/local/bin/ecs-wait-for-task
 
-ENTRYPOINT ["sh", "/usr/local/bin/ecs-wait-for-task"]
+ENTRYPOINT ["bash", "/usr/local/bin/ecs-wait-for-task"]
