@@ -157,9 +157,14 @@ do
 
     if [[ ${EXIT_CODE} =~ ^[0-9]+$ ]]; then
         echo "Task finished with code ${EXIT_CODE}"
+
+        [[ $TASK_ARN =~ /(.*)$ ]]
+        TASK_ID=${BASH_REMATCH[1]}
+
         echo "## LOGS ##"
-        ecs-cli logs --task-id ${TASK_ARN} --region ${AWS_REGION} --cluster ${AWS_CLUSTER}
+        ecs-cli logs --task-id "${TASK_ID}" --region "${AWS_REGION}" --cluster "${AWS_CLUSTER}"
         echo "##########"
+
         exit ${EXIT_CODE}
     fi
 
